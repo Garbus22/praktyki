@@ -1,0 +1,68 @@
+import java.time.LocalDateTime
+
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.3'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'Demo project for Spring Boot'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+compileJava {
+	options.compilerArgs << '-parameters'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	runtimeOnly 'com.h2database:h2'
+	implementation 'com.auth0:java-jwt:4.4.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+tasks.register('generatePostsAndComments') {
+	doLast {
+		File dataSql = file("src/main/resources/data.sql")
+		dataSql.text = ""
+
+
+		(1..100).each { i ->
+			String date = LocalDateTime.now().minusDays(100 - i).toString()
+			dataSql.append("INSERT INTO post (id, title, content, created) VALUES ($i, 'Test post $i', 'Content $i', '$date');\n")
+		}
+
+		(1..100).each { i ->
+			int postId = (int) (1 + i / 10)
+			String date = LocalDateTime.now().minusDays(100 - i).toString()
+			dataSql.append("INSERT INTO comment (id, post_id, content, created) VALUES ($i, $postId, 'Comment $i', '$date');\n")
+		}
+	}
+}
